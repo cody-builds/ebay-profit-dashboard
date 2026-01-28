@@ -33,7 +33,7 @@ export function DashboardHeader() {
     {
       title: 'Total Profit',
       value: metrics.totalProfit,
-      format: 'currency',
+      format: 'currency' as const,
       trend: metrics.trends.profit,
       icon: DollarSign,
       color: 'green' as const,
@@ -41,7 +41,7 @@ export function DashboardHeader() {
     {
       title: 'Monthly Profit',
       value: metrics.monthlyProfit,
-      format: 'currency',
+      format: 'currency' as const,
       trend: metrics.trends.profit,
       icon: TrendingUp,
       color: 'blue' as const,
@@ -49,7 +49,7 @@ export function DashboardHeader() {
     {
       title: 'Total Sales',
       value: metrics.totalTransactions,
-      format: 'number',
+      format: 'number' as const,
       trend: metrics.trends.transactions,
       icon: ShoppingBag,
       color: 'purple' as const,
@@ -57,7 +57,7 @@ export function DashboardHeader() {
     {
       title: 'Avg. Profit Margin',
       value: metrics.profitMargin,
-      format: 'percentage',
+      format: 'percentage' as const,
       trend: metrics.trends.margin,
       icon: Target,
       color: 'orange' as const,
