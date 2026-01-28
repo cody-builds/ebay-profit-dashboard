@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { APIResponse } from '@/lib/types';
+import { useAuthStore } from '@/store/authStore';
 
 export interface SyncStatus {
   status: 'synced' | 'syncing' | 'error' | 'never_synced';
@@ -30,14 +31,29 @@ async function fetchSyncStatus(): Promise<SyncStatus> {
 }
 
 export function useSyncStatus() {
+  const { isAuthenticated, user, isLoading } = useAuthStore();
+
   return useQuery({
     queryKey: ['sync-status'],
     queryFn: fetchSyncStatus,
+    // Only enable query when user is authenticated and not loading
+    enabled: isAuthenticated && !!user && !isLoading,
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 30000, // 30 seconds
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    // Only poll when authenticated
+    refetchInterval: (data, query) => {
+      // Stop polling if user becomes unauthenticated
+      if (!isAuthenticated || !user) return false;
+      // Exponential backoff on errors
+      if (query.state.error) return Math.min(60000 * Math.pow(2, query.state.errorUpdateCount), 300000);
+      return 30000; // 30 seconds normal interval
+    },
+    retry: (failureCount, error: any) => {
+      // Stop retrying on 401 (unauthorized)
+      if (error?.message?.includes('401') || error?.message?.includes('unauthorized')) return false;
+      return failureCount < 3;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Max 30 second delay
   });
 }
 

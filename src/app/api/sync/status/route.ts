@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { StorageService } from '@/lib/storage/storage-service';
 import { EbaySyncService } from '@/lib/ebay/sync-service';
+import { createClient } from '@/lib/supabase/server';
+import type { NextRequest } from 'next/server';
 
 // Global sync service instance (same as in trigger route)
 let syncService: EbaySyncService | null = null;
@@ -13,8 +15,25 @@ function getSyncService(): EbaySyncService {
   return syncService;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Check authentication first
+    const supabase = createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Authentication required',
+          },
+          timestamp: new Date().toISOString(),
+        },
+        { status: 401 }
+      );
+    }
     const syncSvc = getSyncService();
     const storageService = new StorageService();
     
