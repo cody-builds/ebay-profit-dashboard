@@ -42,9 +42,10 @@ export function useSyncStatus() {
     gcTime: 5 * 60 * 1000, // 5 minutes
     // Only poll when authenticated - simple interval  
     refetchInterval: isAuthenticated && !!user ? 30000 : false,
-    retry: (failureCount: number, error: any) => {
+    retry: (failureCount: number, error: unknown) => {
       // Stop retrying on 401 (unauthorized)
-      if (error?.message?.includes('401') || error?.message?.includes('unauthorized')) return false;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('401') || errorMessage.includes('unauthorized')) return false;
       return failureCount < 3;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Max 30 second delay
