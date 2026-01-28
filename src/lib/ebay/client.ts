@@ -224,15 +224,19 @@ export class EbayAPIClient {
       const getNumericValue = (obj: unknown): number => {
         if (typeof obj === 'number') return obj;
         if (typeof obj === 'string') return parseFloat(obj) || 0;
-        if (obj && typeof obj === 'object' && obj.value) {
-          return parseFloat(obj.value) || 0;
+        if (obj && typeof obj === 'object' && 'value' in obj) {
+          const value = (obj as { value: unknown }).value;
+          return parseFloat(String(value)) || 0;
         }
         return 0;
       };
 
       const getString = (obj: unknown): string => {
         if (typeof obj === 'string') return obj;
-        if (obj && typeof obj === 'object' && obj.value) return obj.value || '';
+        if (obj && typeof obj === 'object' && 'value' in obj) {
+          const value = (obj as { value: unknown }).value;
+          return String(value) || '';
+        }
         return obj?.toString() || '';
       };
 
@@ -241,10 +245,10 @@ export class EbayAPIClient {
       const paymentProcessingFee = 0.30; // Standard eBay managed payments fee
       
       // Extract item details safely
-      const item = ebayTransaction.Item || {};
-      const listingDetails = item.ListingDetails || {};
-      const primaryCategory = item.PrimaryCategory || {};
-      const shippingService = ebayTransaction.ShippingServiceSelected || {};
+      const item = (ebayTransaction.Item as Record<string, unknown>) || {};
+      const listingDetails = (item.ListingDetails as Record<string, unknown>) || {};
+      const primaryCategory = (item.PrimaryCategory as Record<string, unknown>) || {};
+      const shippingService = (ebayTransaction.ShippingServiceSelected as Record<string, unknown>) || {};
       
       return {
         transactionId: getString(ebayTransaction.TransactionID),

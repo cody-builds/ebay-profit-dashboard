@@ -35,10 +35,7 @@ export function useSyncStatus() {
     queryFn: fetchSyncStatus,
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: (query) => {
-      // Refetch more frequently if syncing is in progress
-      return query?.data?.status === 'syncing' ? 5000 : 30000; // 5s when syncing, 30s otherwise
-    },
+    refetchInterval: 30000, // 30 seconds
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
