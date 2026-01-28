@@ -296,12 +296,13 @@ export class StorageService {
    */
   private deserializeSettings(data: Record<string, unknown>): UserSettings {
     return {
-      ...data,
-      createdAt: new Date(data.createdAt),
-      updatedAt: new Date(data.updatedAt),
+      ...(data as Omit<UserSettings, 'createdAt' | 'updatedAt' | 'ebayTokens'>),
+      createdAt: new Date(data.createdAt as string),
+      updatedAt: new Date(data.updatedAt as string),
       ebayTokens: data.ebayTokens ? {
-        ...data.ebayTokens,
-        expiresAt: new Date(data.ebayTokens.expiresAt),
+        accessToken: (data.ebayTokens as Record<string, unknown>).accessToken as string,
+        refreshToken: (data.ebayTokens as Record<string, unknown>).refreshToken as string,
+        expiresAt: new Date((data.ebayTokens as Record<string, unknown>).expiresAt as string),
       } : undefined,
     };
   }

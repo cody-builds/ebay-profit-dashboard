@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { APIResponse } from '@/lib/types';
 
-interface SyncStatus {
+export interface SyncStatus {
   status: 'synced' | 'syncing' | 'error' | 'never_synced';
   lastSyncTime?: Date;
   nextSyncTime?: Date;
