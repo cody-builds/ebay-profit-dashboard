@@ -27,7 +27,7 @@ export class SupabaseStorageService {
    * Convert database transaction to application transaction model
    */
   private mapDBToTransaction(dbTransaction: DBTransaction): Transaction {
-    const fees = dbTransaction.ebay_fees as EbayFeeBreakdown;
+    const fees = (dbTransaction.ebay_fees as unknown) as EbayFeeBreakdown;
     
     return {
       id: dbTransaction.id,
