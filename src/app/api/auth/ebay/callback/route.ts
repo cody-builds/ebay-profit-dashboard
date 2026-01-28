@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createEbayClient, validateOAuthState } from '@/lib/ebay/client';
 import { StorageService } from '@/lib/storage/storage-service';
-import { UserSettings } from '@/lib/types';
 
 export async function GET(request: NextRequest) {
   try {

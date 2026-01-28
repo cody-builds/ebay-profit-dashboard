@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Transaction, APIResponse, PaginationInfo } from '@/lib/types';
 
 interface TransactionFilters {
@@ -85,7 +85,6 @@ export function useTransaction(transactionId: string) {
 
 // Mutation hook for updating transaction costs
 export function useUpdateTransactionCost() {
-  const { useMutation, useQueryClient } = require('@tanstack/react-query');
   const queryClient = useQueryClient();
 
   return useMutation({

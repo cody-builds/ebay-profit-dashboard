@@ -6,7 +6,6 @@ import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { CostEditor } from './CostEditor';
 import { 
   Calendar, 
-  DollarSign, 
   TrendingUp, 
   TrendingDown, 
   Package, 

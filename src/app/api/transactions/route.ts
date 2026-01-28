@@ -167,8 +167,8 @@ function applyFilters(transactions: Transaction[], filters: TransactionFilters):
   // Sorting
   if (filters.sortBy) {
     filtered.sort((a, b) => {
-      const aVal = a[filters.sortBy!] as any;
-      const bVal = b[filters.sortBy!] as any;
+      const aVal = a[filters.sortBy!] as string | number | Date;
+      const bVal = b[filters.sortBy!] as string | number | Date;
       
       let comparison = 0;
       if (aVal < bVal) comparison = -1;
@@ -196,8 +196,8 @@ export async function GET(request: NextRequest) {
       condition: searchParams.get('condition') || undefined,
       minProfit: searchParams.get('minProfit') ? parseFloat(searchParams.get('minProfit')!) : undefined,
       maxProfit: searchParams.get('maxProfit') ? parseFloat(searchParams.get('maxProfit')!) : undefined,
-      sortBy: searchParams.get('sortBy') as any || 'soldDate',
-      sortOrder: searchParams.get('sortOrder') as any || 'desc',
+      sortBy: (searchParams.get('sortBy') as 'soldDate' | 'soldPrice' | 'netProfit' | 'profitMargin') || 'soldDate',
+      sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
       dateRange: searchParams.get('dateStart') || searchParams.get('dateEnd') ? {
         start: searchParams.get('dateStart') ? new Date(searchParams.get('dateStart')!) : new Date(0),
         end: searchParams.get('dateEnd') ? new Date(searchParams.get('dateEnd')!) : new Date(),

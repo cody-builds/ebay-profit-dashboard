@@ -127,7 +127,7 @@ export interface APIResponse<T> {
   data: T;
   metadata?: {
     pagination?: PaginationInfo;
-    filters?: any;
+    filters?: Record<string, unknown>;
     timestamp: string;
   };
 }
@@ -137,7 +137,7 @@ export interface APIError {
   error: {
     code: string;
     message: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
     field?: string;
   };
   timestamp: string;

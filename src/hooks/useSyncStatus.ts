@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { APIResponse } from '@/lib/types';
 
 interface SyncStatus {
@@ -46,7 +46,6 @@ export function useSyncStatus() {
 
 // Hook for triggering manual sync
 export function useTriggerSync() {
-  const { useMutation, useQueryClient } = require('@tanstack/react-query');
   const queryClient = useQueryClient();
 
   return useMutation({

@@ -40,7 +40,7 @@ export function QuickActions() {
         title: 'Sync Started',
         message: 'eBay transaction sync has been triggered successfully.',
       });
-    } catch (error) {
+    } catch {
       addNotification({
         type: 'error',
         title: 'Sync Failed',
@@ -75,7 +75,7 @@ export function QuickActions() {
         title: 'Export Complete',
         message: 'Transaction data has been exported successfully.',
       });
-    } catch (error) {
+    } catch {
       addNotification({
         type: 'error',
         title: 'Export Failed',

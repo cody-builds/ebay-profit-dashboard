@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Search, 
@@ -63,7 +63,7 @@ export function TransactionFilters() {
   ];
 
   // Apply filters to URL
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
     
     if (search) params.set('search', search);
@@ -80,7 +80,7 @@ export function TransactionFilters() {
     params.set('page', '1');
     
     router.push(`/transactions?${params.toString()}`);
-  };
+  }, [search, category, condition, minProfit, maxProfit, dateStart, dateEnd, sortBy, sortOrder, router]);
 
   // Clear all filters
   const clearFilters = () => {
@@ -103,7 +103,7 @@ export function TransactionFilters() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, applyFilters]);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
@@ -289,7 +289,7 @@ export function TransactionFilters() {
           <span className="text-sm text-gray-600">Active filters:</span>
           {search && (
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-              Search: "{search}"
+              Search: &quot;{search}&quot;
               <button
                 onClick={() => setSearch('')}
                 className="ml-1 text-blue-600 hover:text-blue-800"

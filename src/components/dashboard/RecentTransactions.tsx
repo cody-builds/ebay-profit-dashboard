@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { ArrowRight, Package, DollarSign, Calendar } from 'lucide-react';
 import { useTransactions } from '@/hooks/useTransactions';
-import { TransactionCard } from '@/components/ui/TransactionCard';
 
 export function RecentTransactions() {
   const { data: transactionsData, isLoading, error } = useTransactions({

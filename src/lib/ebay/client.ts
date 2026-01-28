@@ -4,7 +4,6 @@ import {
   EbayOAuthResponse,
   EbayGetSellerTransactionsRequest,
   EbayGetSellerTransactionsResponse,
-  EbayAPIError,
   EbayTransactionData,
 } from './types';
 import { parseStringPromise } from 'xml2js';
@@ -219,10 +218,10 @@ export class EbayAPIClient {
   /**
    * Transform eBay transaction data to internal format
    */
-  transformTransaction(ebayTransaction: any): EbayTransactionData {
+  transformTransaction(ebayTransaction: Record<string, unknown>): EbayTransactionData {
     try {
       // Handle nested objects that might be strings or objects
-      const getNumericValue = (obj: any): number => {
+      const getNumericValue = (obj: unknown): number => {
         if (typeof obj === 'number') return obj;
         if (typeof obj === 'string') return parseFloat(obj) || 0;
         if (obj && typeof obj === 'object' && obj.value) {
@@ -231,7 +230,7 @@ export class EbayAPIClient {
         return 0;
       };
 
-      const getString = (obj: any): string => {
+      const getString = (obj: unknown): string => {
         if (typeof obj === 'string') return obj;
         if (obj && typeof obj === 'object' && obj.value) return obj.value || '';
         return obj?.toString() || '';

@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { StorageService } from '@/lib/storage/storage-service';
 import { createEbayClient } from '@/lib/ebay/client';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const storageService = new StorageService();
     const settings = await storageService.getSettings();

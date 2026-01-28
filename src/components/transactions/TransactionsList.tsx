@@ -25,8 +25,8 @@ export function TransactionsList({ searchParams }: TransactionsListProps) {
     condition: searchParams.condition as string,
     minProfit: searchParams.minProfit ? parseFloat(searchParams.minProfit as string) : undefined,
     maxProfit: searchParams.maxProfit ? parseFloat(searchParams.maxProfit as string) : undefined,
-    sortBy: (searchParams.sortBy as any) || 'soldDate',
-    sortOrder: (searchParams.sortOrder as any) || 'desc',
+    sortBy: (searchParams.sortBy as 'soldDate' | 'soldPrice' | 'netProfit' | 'profitMargin') || 'soldDate',
+    sortOrder: (searchParams.sortOrder as 'asc' | 'desc') || 'desc',
     dateStart: searchParams.dateStart as string,
     dateEnd: searchParams.dateEnd as string,
   };

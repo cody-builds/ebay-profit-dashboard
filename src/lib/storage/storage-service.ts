@@ -253,7 +253,7 @@ export class StorageService {
   /**
    * Serialize transaction for storage (convert Dates to strings)
    */
-  private serializeTransaction(transaction: Transaction): any {
+  private serializeTransaction(transaction: Transaction): Record<string, unknown> {
     return {
       ...transaction,
       soldDate: transaction.soldDate.toISOString(),
@@ -266,7 +266,7 @@ export class StorageService {
   /**
    * Deserialize transaction from storage (convert strings to Dates)
    */
-  private deserializeTransaction(data: any): Transaction {
+  private deserializeTransaction(data: Record<string, unknown>): Transaction {
     return {
       ...data,
       soldDate: new Date(data.soldDate),
@@ -279,7 +279,7 @@ export class StorageService {
   /**
    * Serialize settings for storage
    */
-  private serializeSettings(settings: UserSettings): any {
+  private serializeSettings(settings: UserSettings): Record<string, unknown> {
     return {
       ...settings,
       createdAt: settings.createdAt.toISOString(),
@@ -294,7 +294,7 @@ export class StorageService {
   /**
    * Deserialize settings from storage
    */
-  private deserializeSettings(data: any): UserSettings {
+  private deserializeSettings(data: Record<string, unknown>): UserSettings {
     return {
       ...data,
       createdAt: new Date(data.createdAt),
@@ -361,8 +361,8 @@ export class StorageService {
     sortOrder: 'asc' | 'desc' = 'desc'
   ): Transaction[] {
     return transactions.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: number;
+      let bValue: number;
 
       switch (sortBy) {
         case 'soldDate':

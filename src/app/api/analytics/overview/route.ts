@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { DashboardMetrics } from '@/lib/types';
 
 // Mock data for demonstration - replace with actual data fetching
@@ -16,7 +16,7 @@ const mockDashboardMetrics: DashboardMetrics = {
   },
 };
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // TODO: Implement actual data fetching logic
     // This would typically:

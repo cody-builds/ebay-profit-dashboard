@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { StorageService } from '@/lib/storage/storage-service';
 import { EbaySyncService } from '@/lib/ebay/sync-service';
 
@@ -13,7 +13,7 @@ function getSyncService(): EbaySyncService {
   return syncService;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const syncSvc = getSyncService();
     const storageService = new StorageService();

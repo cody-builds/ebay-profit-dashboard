@@ -15,6 +15,16 @@ import {
 } from 'lucide-react';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
 
+interface SyncStatus {
+  status: 'synced' | 'syncing' | 'error' | 'never_synced';
+  lastSyncTime?: Date;
+  nextSyncTime?: Date;
+  syncProgress?: number;
+  error?: string;
+  transactionsProcessed?: number;
+  transactionsTotal?: number;
+}
+
 const navigationItems = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Transactions', href: '/transactions', icon: CreditCard },
@@ -135,7 +145,7 @@ function SyncStatusIndicator({
   isLoading, 
   mobile = false 
 }: { 
-  status: any; 
+  status: SyncStatus | undefined; 
   isLoading: boolean; 
   mobile?: boolean; 
 }) {

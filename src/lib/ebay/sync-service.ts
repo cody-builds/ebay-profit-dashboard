@@ -306,7 +306,7 @@ export class EbaySyncService {
   /**
    * Check if error should not be retried
    */
-  private isNonRetryableError(error: any): boolean {
+  private isNonRetryableError(error: Error | unknown): boolean {
     // Don't retry authentication errors
     if (error.message?.includes('401') || error.message?.includes('403')) {
       return true;

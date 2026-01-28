@@ -1,4 +1,4 @@
-import { Package, Calendar, DollarSign, TrendingUp, Edit3 } from 'lucide-react';
+import { Package, Calendar, TrendingUp, Edit3 } from 'lucide-react';
 import { Transaction } from '@/lib/types';
 
 interface TransactionCardProps {
@@ -147,7 +147,7 @@ export function TransactionCard({ transaction, compact = false, showActions = tr
         
         {transaction.notes && (
           <div className="mt-2">
-            <p className="text-sm text-gray-600 italic">"{transaction.notes}"</p>
+            <p className="text-sm text-gray-600 italic">&quot;{transaction.notes}&quot;</p>
           </div>
         )}
       </div>
