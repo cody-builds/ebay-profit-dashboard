@@ -1,40 +1,66 @@
 import { NextResponse } from 'next/server';
 import { DashboardMetrics } from '@/lib/types';
-
-// Mock data for demonstration - replace with actual data fetching
-const mockDashboardMetrics: DashboardMetrics = {
-  totalProfit: 2847.50,
-  monthlyProfit: 892.30,
-  totalTransactions: 156,
-  averageProfit: 18.25,
-  profitMargin: 24.8,
-  topCategory: 'Trading Cards',
-  trends: {
-    profit: 12.5,
-    transactions: 8.2,
-    margin: -2.1,
-  },
-};
+import { SupabaseStorageService } from '@/lib/storage/supabase-storage-service';
 
 export async function GET() {
   try {
-    // TODO: Implement actual data fetching logic
-    // This would typically:
-    // 1. Get user from session/auth
-    // 2. Query database for user's transactions
-    // 3. Calculate metrics and trends
-    // 4. Return formatted response
+    const storageService = new SupabaseStorageService(true); // Server-side
 
-    // For now, return mock data
-    const response = {
-      success: true,
-      data: mockDashboardMetrics,
-      metadata: {
-        timestamp: new Date().toISOString(),
+    // Calculate date ranges for current and previous periods
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+    // Get current period analytics
+    const currentPeriodAnalytics = await storageService.getAnalytics(thirtyDaysAgo, now);
+    
+    // Get previous period analytics for trend calculation
+    const previousPeriodAnalytics = await storageService.getAnalytics(sixtyDaysAgo, thirtyDaysAgo);
+
+    // Get all-time analytics
+    const allTimeStartDate = new Date(2020, 0, 1); // Start from 2020
+    const allTimeAnalytics = await storageService.getAnalytics(allTimeStartDate, now);
+
+    // Calculate trends
+    const profitTrend = previousPeriodAnalytics.totalProfit > 0 
+      ? ((currentPeriodAnalytics.totalProfit - previousPeriodAnalytics.totalProfit) / previousPeriodAnalytics.totalProfit) * 100
+      : 0;
+
+    const transactionsTrend = previousPeriodAnalytics.totalTransactions > 0
+      ? ((currentPeriodAnalytics.totalTransactions - previousPeriodAnalytics.totalTransactions) / previousPeriodAnalytics.totalTransactions) * 100
+      : 0;
+
+    const marginTrend = previousPeriodAnalytics.averageMargin > 0
+      ? currentPeriodAnalytics.averageMargin - previousPeriodAnalytics.averageMargin
+      : 0;
+
+    // Determine top category
+    const topCategory = allTimeAnalytics.topCategories.length > 0 
+      ? allTimeAnalytics.topCategories[0].category 
+      : 'No data';
+
+    const dashboardMetrics: DashboardMetrics = {
+      totalProfit: allTimeAnalytics.totalProfit,
+      monthlyProfit: currentPeriodAnalytics.totalProfit,
+      totalTransactions: allTimeAnalytics.totalTransactions,
+      averageProfit: allTimeAnalytics.averageProfit,
+      profitMargin: allTimeAnalytics.averageMargin,
+      topCategory,
+      trends: {
+        profit: Number(profitTrend.toFixed(1)),
+        transactions: Number(transactionsTrend.toFixed(1)),
+        margin: Number(marginTrend.toFixed(1)),
       },
     };
 
-    return NextResponse.json(response);
+    return NextResponse.json({
+      success: true,
+      data: dashboardMetrics,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        periodDays: 30,
+      },
+    });
   } catch (error) {
     console.error('Error fetching dashboard metrics:', error);
     
@@ -44,6 +70,7 @@ export async function GET() {
         error: {
           code: 'METRICS_FETCH_ERROR',
           message: 'Failed to fetch dashboard metrics',
+          details: error instanceof Error ? error.message : 'Unknown error',
         },
         timestamp: new Date().toISOString(),
       },

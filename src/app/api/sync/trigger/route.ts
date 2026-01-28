@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // Get user settings and validate eBay authentication
     const storageService = new StorageService();
-    const settings = await storageService.getSettings();
+    const settings = await storageService.getUserSettings();
 
     if (!settings?.ebayTokens?.accessToken) {
       return NextResponse.json(

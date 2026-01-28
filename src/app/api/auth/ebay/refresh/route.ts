@@ -5,7 +5,7 @@ import { createEbayClient } from '@/lib/ebay/client';
 export async function POST() {
   try {
     const storageService = new StorageService();
-    const settings = await storageService.getSettings();
+    const settings = await storageService.getUserSettings();
 
     if (!settings?.ebayTokens?.refreshToken) {
       return NextResponse.json(
@@ -34,7 +34,7 @@ export async function POST() {
     };
     settings.updatedAt = new Date();
 
-    await storageService.saveSettings(settings);
+    await storageService.saveUserSettings(settings);
 
     return NextResponse.json({
       success: true,

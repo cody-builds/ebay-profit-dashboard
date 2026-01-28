@@ -7,7 +7,7 @@ export async function GET() {
     
     // Test storage service
     const storageService = new StorageService();
-    const settings = await storageService.getSettings();
+    const settings = await storageService.getUserSettings();
     const transactions = await storageService.getTransactions(undefined, 1, 1);
     
     const healthData = {

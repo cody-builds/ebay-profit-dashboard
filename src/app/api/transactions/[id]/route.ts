@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { StorageService } from '@/lib/storage/storage-service';
+import { SupabaseStorageService } from '@/lib/storage/supabase-storage-service';
 import { updateTransactionProfits } from '@/lib/calculator';
 import { z } from 'zod';
 
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = params;
 
-    const storageService = new StorageService();
+    const storageService = new SupabaseStorageService(true); // Server-side
     const transaction = await storageService.getTransaction(id);
 
     if (!transaction) {
@@ -68,7 +68,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const body = await request.json();
     const updateData = TransactionUpdateSchema.parse(body);
 
-    const storageService = new StorageService();
+    const storageService = new SupabaseStorageService(true); // Server-side
     const transaction = await storageService.getTransaction(id);
 
     if (!transaction) {
@@ -144,7 +144,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = params;
 
-    const storageService = new StorageService();
+    const storageService = new SupabaseStorageService(true); // Server-side
     const transaction = await storageService.getTransaction(id);
 
     if (!transaction) {

@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     // Save tokens to user settings
     const storageService = new StorageService();
-    let settings = await storageService.getSettings();
+    let settings = await storageService.getUserSettings();
 
     if (!settings) {
       // Create new settings
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     };
     settings.updatedAt = new Date();
 
-    await storageService.saveSettings(settings);
+    await storageService.saveUserSettings(settings);
 
     // Clear OAuth state cookie
     const response = NextResponse.redirect(new URL('/?connected=true', request.url));

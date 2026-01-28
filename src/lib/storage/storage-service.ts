@@ -1,18 +1,13 @@
 import { Transaction, UserSettings, TransactionFilters, PaginationInfo } from '../types';
 
-export interface PaginatedTransactions {
-  data: Transaction[];
-  pagination: PaginationInfo;
-}
-
 /**
- * Local Storage Service for managing transactions and settings
- * Browser-based storage for MVP - will be replaced with database later
+ * Storage Service - In production, this would interface with a database
+ * For now, uses in-memory storage for development
  */
 export class StorageService {
-  private readonly STORAGE_KEY = 'dealflow_data';
-  private readonly SETTINGS_KEY = 'dealflow_settings';
-  private readonly SYNC_KEY = 'dealflow_sync';
+  private static transactions: Transaction[] = [];
+  private static userSettings: UserSettings | null = null;
+  private static lastSyncTime: Date | null = null;
 
   /**
    * Get all transactions with optional filtering and pagination
@@ -20,29 +15,95 @@ export class StorageService {
   async getTransactions(
     filters?: TransactionFilters,
     page: number = 1,
-    limit: number = 50
-  ): Promise<PaginatedTransactions> {
-    const allTransactions = this.loadTransactions();
-    
+    limit: number = 25
+  ): Promise<{
+    transactions: Transaction[];
+    pagination: PaginationInfo;
+  }> {
+    let filteredTransactions = [...StorageService.transactions];
+
     // Apply filters
-    let filteredTransactions = this.applyFilters(allTransactions, filters);
-    
-    // Apply sorting
-    if (filters?.sortBy) {
-      filteredTransactions = this.applySorting(filteredTransactions, filters.sortBy, filters.sortOrder);
-    } else {
-      // Default sort by sold date, newest first
-      filteredTransactions.sort((a, b) => b.soldDate.getTime() - a.soldDate.getTime());
+    if (filters) {
+      if (filters.dateRange) {
+        filteredTransactions = filteredTransactions.filter(t => 
+          t.soldDate >= filters.dateRange!.start && 
+          t.soldDate <= filters.dateRange!.end
+        );
+      }
+
+      if (filters.minProfit !== undefined) {
+        filteredTransactions = filteredTransactions.filter(t => 
+          t.netProfit >= filters.minProfit!
+        );
+      }
+
+      if (filters.maxProfit !== undefined) {
+        filteredTransactions = filteredTransactions.filter(t => 
+          t.netProfit <= filters.maxProfit!
+        );
+      }
+
+      if (filters.category) {
+        filteredTransactions = filteredTransactions.filter(t => 
+          t.category?.toLowerCase().includes(filters.category!.toLowerCase())
+        );
+      }
+
+      if (filters.condition) {
+        filteredTransactions = filteredTransactions.filter(t => 
+          t.condition?.toLowerCase().includes(filters.condition!.toLowerCase())
+        );
+      }
+
+      if (filters.search) {
+        const searchTerm = filters.search.toLowerCase();
+        filteredTransactions = filteredTransactions.filter(t => 
+          t.title.toLowerCase().includes(searchTerm) ||
+          t.category?.toLowerCase().includes(searchTerm) ||
+          t.notes?.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      // Apply sorting
+      if (filters.sortBy) {
+        filteredTransactions.sort((a, b) => {
+          let aVal: string | number | Date, bVal: string | number | Date;
+          
+          switch (filters.sortBy) {
+            case 'soldDate':
+              aVal = a.soldDate.getTime();
+              bVal = b.soldDate.getTime();
+              break;
+            case 'soldPrice':
+              aVal = a.soldPrice;
+              bVal = b.soldPrice;
+              break;
+            case 'netProfit':
+              aVal = a.netProfit;
+              bVal = b.netProfit;
+              break;
+            case 'profitMargin':
+              aVal = a.profitMargin;
+              bVal = b.profitMargin;
+              break;
+            default:
+              return 0;
+          }
+
+          const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+          return filters.sortOrder === 'desc' ? -comparison : comparison;
+        });
+      }
     }
 
-    // Calculate pagination
+    // Apply pagination
     const total = filteredTransactions.length;
     const pages = Math.ceil(total / limit);
     const offset = (page - 1) * limit;
-    const paginatedData = filteredTransactions.slice(offset, offset + limit);
+    const paginatedTransactions = filteredTransactions.slice(offset, offset + limit);
 
     return {
-      data: paginatedData,
+      transactions: paginatedTransactions,
       pagination: {
         page,
         limit,
@@ -53,345 +114,213 @@ export class StorageService {
   }
 
   /**
-   * Get single transaction by ID
+   * Get a single transaction by ID
    */
   async getTransaction(id: string): Promise<Transaction | null> {
-    const transactions = this.loadTransactions();
-    return transactions.find(t => t.id === id) || null;
+    const transaction = StorageService.transactions.find(t => t.id === id);
+    return transaction || null;
   }
 
   /**
    * Get transaction by eBay transaction ID
    */
   async getTransactionByEbayId(ebayTransactionId: string): Promise<Transaction | null> {
-    const transactions = this.loadTransactions();
-    return transactions.find(t => t.ebayTransactionId === ebayTransactionId) || null;
+    const transaction = StorageService.transactions.find(t => 
+      t.ebayTransactionId === ebayTransactionId
+    );
+    return transaction || null;
   }
 
   /**
-   * Save new transaction
+   * Save a new transaction
    */
-  async saveTransaction(transaction: Transaction): Promise<void> {
-    const transactions = this.loadTransactions();
-    transactions.push(transaction);
-    this.saveTransactions(transactions);
+  async saveTransaction(transaction: Transaction): Promise<Transaction> {
+    // Ensure unique ID
+    if (StorageService.transactions.find(t => t.id === transaction.id)) {
+      throw new Error(`Transaction with ID ${transaction.id} already exists`);
+    }
+
+    StorageService.transactions.push(transaction);
+    return transaction;
   }
 
   /**
-   * Update existing transaction
+   * Update an existing transaction
    */
-  async updateTransaction(updatedTransaction: Transaction): Promise<void> {
-    const transactions = this.loadTransactions();
-    const index = transactions.findIndex(t => t.id === updatedTransaction.id);
+  async updateTransaction(transaction: Transaction): Promise<Transaction> {
+    const index = StorageService.transactions.findIndex(t => t.id === transaction.id);
     
     if (index === -1) {
-      throw new Error(`Transaction not found: ${updatedTransaction.id}`);
+      throw new Error(`Transaction with ID ${transaction.id} not found`);
     }
-    
-    transactions[index] = updatedTransaction;
-    this.saveTransactions(transactions);
+
+    StorageService.transactions[index] = { ...transaction };
+    return StorageService.transactions[index];
   }
 
   /**
-   * Delete transaction
+   * Delete a transaction
    */
-  async deleteTransaction(id: string): Promise<void> {
-    const transactions = this.loadTransactions();
-    const filteredTransactions = transactions.filter(t => t.id !== id);
+  async deleteTransaction(id: string): Promise<boolean> {
+    const index = StorageService.transactions.findIndex(t => t.id === id);
     
-    if (filteredTransactions.length === transactions.length) {
-      throw new Error(`Transaction not found: ${id}`);
+    if (index === -1) {
+      return false;
     }
-    
-    this.saveTransactions(filteredTransactions);
-  }
 
-  /**
-   * Bulk update transactions
-   */
-  async bulkUpdateTransactions(updates: Array<{ id: string; data: Partial<Transaction> }>): Promise<void> {
-    const transactions = this.loadTransactions();
-    
-    for (const update of updates) {
-      const index = transactions.findIndex(t => t.id === update.id);
-      if (index !== -1) {
-        transactions[index] = { ...transactions[index], ...update.data };
-      }
-    }
-    
-    this.saveTransactions(transactions);
+    StorageService.transactions.splice(index, 1);
+    return true;
   }
 
   /**
    * Get user settings
    */
-  async getSettings(): Promise<UserSettings | null> {
-    if (typeof window === 'undefined') return null;
-    
-    try {
-      const settingsData = localStorage.getItem(this.SETTINGS_KEY);
-      if (!settingsData) return null;
-      
-      const parsed = JSON.parse(settingsData);
-      return this.deserializeSettings(parsed);
-    } catch (error) {
-      console.error('Error loading settings:', error);
-      return null;
-    }
+  async getUserSettings(): Promise<UserSettings | null> {
+    return StorageService.userSettings;
   }
 
   /**
    * Save user settings
    */
-  async saveSettings(settings: UserSettings): Promise<void> {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      const serialized = this.serializeSettings(settings);
-      localStorage.setItem(this.SETTINGS_KEY, JSON.stringify(serialized));
-    } catch (error) {
-      console.error('Error saving settings:', error);
-      throw new Error('Failed to save settings');
-    }
+  async saveUserSettings(settings: UserSettings): Promise<UserSettings> {
+    StorageService.userSettings = settings;
+    return settings;
   }
 
   /**
    * Update last sync time
    */
   async updateLastSyncTime(syncTime: Date): Promise<void> {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      const syncData = {
-        lastSyncTime: syncTime.toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      localStorage.setItem(this.SYNC_KEY, JSON.stringify(syncData));
-    } catch (error) {
-      console.error('Error saving sync time:', error);
-    }
+    StorageService.lastSyncTime = syncTime;
   }
 
   /**
    * Get last sync time
    */
   async getLastSyncTime(): Promise<Date | null> {
-    if (typeof window === 'undefined') return null;
-    
-    try {
-      const syncData = localStorage.getItem(this.SYNC_KEY);
-      if (!syncData) return null;
-      
-      const parsed = JSON.parse(syncData);
-      return new Date(parsed.lastSyncTime);
-    } catch (error) {
-      console.error('Error loading sync time:', error);
-      return null;
-    }
+    return StorageService.lastSyncTime;
   }
 
   /**
-   * Export all data
+   * Get transaction analytics for a date range
    */
-  async exportData(): Promise<{ transactions: Transaction[]; settings: UserSettings | null }> {
-    const transactions = this.loadTransactions();
-    const settings = await this.getSettings();
-    
-    return {
-      transactions,
-      settings,
-    };
-  }
+  async getAnalytics(startDate: Date, endDate: Date): Promise<{
+    totalTransactions: number;
+    totalRevenue: number;
+    totalProfit: number;
+    averageProfit: number;
+    averageMargin: number;
+    averageListingDays: number;
+    topCategories: Array<{ category: string; count: number; profit: number }>;
+  }> {
+    const transactions = StorageService.transactions.filter(t => 
+      t.soldDate >= startDate && t.soldDate <= endDate
+    );
 
-  /**
-   * Clear all data
-   */
-  async clearAllData(): Promise<void> {
-    if (typeof window === 'undefined') return;
-    
-    localStorage.removeItem(this.STORAGE_KEY);
-    localStorage.removeItem(this.SETTINGS_KEY);
-    localStorage.removeItem(this.SYNC_KEY);
-  }
-
-  /**
-   * Load transactions from localStorage
-   */
-  private loadTransactions(): Transaction[] {
-    if (typeof window === 'undefined') return [];
-    
-    try {
-      const data = localStorage.getItem(this.STORAGE_KEY);
-      if (!data) return [];
-      
-      const parsed = JSON.parse(data);
-      return parsed.transactions?.map(this.deserializeTransaction) || [];
-    } catch (error) {
-      console.error('Error loading transactions:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Save transactions to localStorage
-   */
-  private saveTransactions(transactions: Transaction[]): void {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      const data = {
-        transactions: transactions.map(this.serializeTransaction),
-        updatedAt: new Date().toISOString(),
+    if (transactions.length === 0) {
+      return {
+        totalTransactions: 0,
+        totalRevenue: 0,
+        totalProfit: 0,
+        averageProfit: 0,
+        averageMargin: 0,
+        averageListingDays: 0,
+        topCategories: [],
       };
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
-    } catch (error) {
-      console.error('Error saving transactions:', error);
-      throw new Error('Failed to save transactions');
     }
-  }
 
-  /**
-   * Serialize transaction for storage (convert Dates to strings)
-   */
-  private serializeTransaction(transaction: Transaction): Record<string, unknown> {
-    return {
-      ...transaction,
-      soldDate: transaction.soldDate.toISOString(),
-      listedDate: transaction.listedDate.toISOString(),
-      syncedAt: transaction.syncedAt.toISOString(),
-      costUpdatedAt: transaction.costUpdatedAt?.toISOString(),
-    };
-  }
+    const totalRevenue = transactions.reduce((sum, t) => sum + t.soldPrice, 0);
+    const totalProfit = transactions.reduce((sum, t) => sum + t.netProfit, 0);
+    const totalListingDays = transactions.reduce((sum, t) => sum + t.daysListed, 0);
+    const totalMargin = transactions.reduce((sum, t) => sum + t.profitMargin, 0);
 
-  /**
-   * Deserialize transaction from storage (convert strings to Dates)
-   */
-  private deserializeTransaction(data: Record<string, unknown>): Transaction {
-    return {
-      ...(data as Omit<Transaction, 'soldDate' | 'listedDate' | 'syncedAt' | 'costUpdatedAt'>),
-      soldDate: new Date(data.soldDate as string),
-      listedDate: new Date(data.listedDate as string),
-      syncedAt: new Date(data.syncedAt as string),
-      costUpdatedAt: data.costUpdatedAt ? new Date(data.costUpdatedAt as string) : undefined,
-    };
-  }
-
-  /**
-   * Serialize settings for storage
-   */
-  private serializeSettings(settings: UserSettings): Record<string, unknown> {
-    return {
-      ...settings,
-      createdAt: settings.createdAt.toISOString(),
-      updatedAt: settings.updatedAt.toISOString(),
-      ebayTokens: settings.ebayTokens ? {
-        ...settings.ebayTokens,
-        expiresAt: settings.ebayTokens.expiresAt.toISOString(),
-      } : undefined,
-    };
-  }
-
-  /**
-   * Deserialize settings from storage
-   */
-  private deserializeSettings(data: Record<string, unknown>): UserSettings {
-    return {
-      ...(data as Omit<UserSettings, 'createdAt' | 'updatedAt' | 'ebayTokens'>),
-      createdAt: new Date(data.createdAt as string),
-      updatedAt: new Date(data.updatedAt as string),
-      ebayTokens: data.ebayTokens ? {
-        accessToken: (data.ebayTokens as Record<string, unknown>).accessToken as string,
-        refreshToken: (data.ebayTokens as Record<string, unknown>).refreshToken as string,
-        expiresAt: new Date((data.ebayTokens as Record<string, unknown>).expiresAt as string),
-      } : undefined,
-    };
-  }
-
-  /**
-   * Apply filters to transaction list
-   */
-  private applyFilters(transactions: Transaction[], filters?: TransactionFilters): Transaction[] {
-    if (!filters) return transactions;
-
-    return transactions.filter(transaction => {
-      // Date range filter
-      if (filters.dateRange) {
-        const soldDate = transaction.soldDate;
-        if (soldDate < filters.dateRange.start || soldDate > filters.dateRange.end) {
-          return false;
-        }
-      }
-
-      // Profit range filters
-      if (filters.minProfit !== undefined && transaction.netProfit < filters.minProfit) {
-        return false;
-      }
-      if (filters.maxProfit !== undefined && transaction.netProfit > filters.maxProfit) {
-        return false;
-      }
-
-      // Category filter
-      if (filters.category && transaction.category !== filters.category) {
-        return false;
-      }
-
-      // Condition filter
-      if (filters.condition && transaction.condition !== filters.condition) {
-        return false;
-      }
-
-      // Search filter
-      if (filters.search) {
-        const searchTerm = filters.search.toLowerCase();
-        const title = transaction.title.toLowerCase();
-        if (!title.includes(searchTerm)) {
-          return false;
-        }
-      }
-
-      return true;
+    // Calculate top categories
+    const categoryMap = new Map<string, { count: number; profit: number }>();
+    transactions.forEach(t => {
+      const category = t.category || 'Other';
+      const existing = categoryMap.get(category) || { count: 0, profit: 0 };
+      categoryMap.set(category, {
+        count: existing.count + 1,
+        profit: existing.profit + t.netProfit,
+      });
     });
+
+    const topCategories = Array.from(categoryMap.entries())
+      .map(([category, data]) => ({ category, ...data }))
+      .sort((a, b) => b.profit - a.profit)
+      .slice(0, 5);
+
+    return {
+      totalTransactions: transactions.length,
+      totalRevenue: Number(totalRevenue.toFixed(2)),
+      totalProfit: Number(totalProfit.toFixed(2)),
+      averageProfit: Number((totalProfit / transactions.length).toFixed(2)),
+      averageMargin: Number((totalMargin / transactions.length).toFixed(2)),
+      averageListingDays: Number((totalListingDays / transactions.length).toFixed(1)),
+      topCategories,
+    };
   }
 
   /**
-   * Apply sorting to transaction list
+   * Initialize with sample data for development
    */
-  private applySorting(
-    transactions: Transaction[],
-    sortBy: string,
-    sortOrder: 'asc' | 'desc' = 'desc'
-  ): Transaction[] {
-    return transactions.sort((a, b) => {
-      let aValue: number;
-      let bValue: number;
+  async initializeSampleData(): Promise<void> {
+    if (StorageService.transactions.length > 0) {
+      return; // Already initialized
+    }
 
-      switch (sortBy) {
-        case 'soldDate':
-          aValue = a.soldDate.getTime();
-          bValue = b.soldDate.getTime();
-          break;
-        case 'soldPrice':
-          aValue = a.soldPrice;
-          bValue = b.soldPrice;
-          break;
-        case 'netProfit':
-          aValue = a.netProfit;
-          bValue = b.netProfit;
-          break;
-        case 'profitMargin':
-          aValue = a.profitMargin;
-          bValue = b.profitMargin;
-          break;
-        default:
-          aValue = a.soldDate.getTime();
-          bValue = b.soldDate.getTime();
-      }
+    // Add sample transactions
+    const sampleTransactions: Transaction[] = [
+      {
+        id: '1',
+        ebayTransactionId: 'ebay_123456',
+        ebayItemId: 'item_789',
+        title: 'Pokemon Charizard VMAX - Brilliant Stars',
+        soldPrice: 45.99,
+        soldDate: new Date('2024-01-20T10:30:00Z'),
+        listedDate: new Date('2024-01-15T14:20:00Z'),
+        itemCost: 25.00,
+        ebayFees: {
+          finalValueFee: 6.09,
+          paymentProcessingFee: 0.30,
+          total: 6.39,
+        },
+        shippingCost: 4.50,
+        shippingService: 'eBay Standard Envelope',
+        netProfit: 10.10,
+        profitMargin: 21.98,
+        daysListed: 5,
+        category: 'Trading Cards',
+        condition: 'Near Mint',
+        syncedAt: new Date('2024-01-20T11:00:00Z'),
+        syncStatus: 'synced',
+      },
+      {
+        id: '2',
+        ebayTransactionId: 'ebay_234567',
+        ebayItemId: 'item_890',
+        title: 'Pokemon Pikachu VMAX - Vivid Voltage',
+        soldPrice: 32.50,
+        soldDate: new Date('2024-01-19T15:45:00Z'),
+        listedDate: new Date('2024-01-12T09:15:00Z'),
+        itemCost: 18.75,
+        ebayFees: {
+          finalValueFee: 4.31,
+          paymentProcessingFee: 0.30,
+          total: 4.61,
+        },
+        shippingCost: 1.50,
+        shippingService: 'PWE',
+        netProfit: 7.64,
+        profitMargin: 23.51,
+        daysListed: 7,
+        category: 'Trading Cards',
+        condition: 'Near Mint',
+        syncedAt: new Date('2024-01-19T16:00:00Z'),
+        syncStatus: 'synced',
+      },
+    ];
 
-      if (sortOrder === 'asc') {
-        return aValue - bValue;
-      } else {
-        return bValue - aValue;
-      }
-    });
+    StorageService.transactions = sampleTransactions;
   }
 }

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 import { Navigation } from "@/components/layouts/Navigation";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
@@ -36,12 +37,14 @@ export default function RootLayout({
       <body className={inter.className}>
         <ErrorBoundary>
           <QueryProvider>
-            <div className="min-h-screen bg-gray-50">
-              <Navigation />
-              <main className="container mx-auto px-4 py-6">
-                {children}
-              </main>
-            </div>
+            <AuthProvider>
+              <div className="min-h-screen bg-gray-50">
+                <Navigation />
+                <main className="container mx-auto px-4 py-6">
+                  {children}
+                </main>
+              </div>
+            </AuthProvider>
           </QueryProvider>
         </ErrorBoundary>
       </body>
