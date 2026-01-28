@@ -40,15 +40,9 @@ export function useSyncStatus() {
     enabled: isAuthenticated && !!user && !isLoading,
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
-    // Only poll when authenticated
-    refetchInterval: (data, query) => {
-      // Stop polling if user becomes unauthenticated
-      if (!isAuthenticated || !user) return false;
-      // Exponential backoff on errors
-      if (query.state.error) return Math.min(60000 * Math.pow(2, query.state.errorUpdateCount), 300000);
-      return 30000; // 30 seconds normal interval
-    },
-    retry: (failureCount, error: any) => {
+    // Only poll when authenticated - simple interval  
+    refetchInterval: isAuthenticated && !!user ? 30000 : false,
+    retry: (failureCount: number, error: any) => {
       // Stop retrying on 401 (unauthorized)
       if (error?.message?.includes('401') || error?.message?.includes('unauthorized')) return false;
       return failureCount < 3;
