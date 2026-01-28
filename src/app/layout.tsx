@@ -1,17 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { QueryProvider } from "@/providers/QueryProvider";
+import { Navigation } from "@/components/layouts/Navigation";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "DealFlow - Pokemon Card Arbitrage Tool",
-  description: "Find profitable Pokemon card flips between TCGPlayer and eBay. Real profit calculations after all fees.",
-  keywords: ["Pokemon cards", "TCGPlayer", "eBay", "arbitrage", "card flipping", "profit calculator"],
+  title: "DealFlow - eBay Profit Dashboard",
+  description: "Track your eBay sales performance with automated profit calculations, comprehensive analytics, and business intelligence insights.",
+  keywords: ["eBay", "profit tracking", "sales analytics", "business dashboard", "e-commerce", "profit calculator"],
   authors: [{ name: "DealFlow" }],
   openGraph: {
-    title: "DealFlow - Pokemon Card Arbitrage Tool",
-    description: "Find profitable Pokemon card flips between TCGPlayer and eBay",
+    title: "DealFlow - eBay Profit Dashboard",
+    description: "Track your eBay sales performance with automated profit calculations and analytics",
     type: "website",
   },
 };
@@ -20,7 +23,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#000000",
+  themeColor: "#0066cc",
 };
 
 export default function RootLayout({
@@ -30,7 +33,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <ErrorBoundary>
+          <QueryProvider>
+            <div className="min-h-screen bg-gray-50">
+              <Navigation />
+              <main className="container mx-auto px-4 py-6">
+                {children}
+              </main>
+            </div>
+          </QueryProvider>
+        </ErrorBoundary>
+      </body>
     </html>
   );
 }

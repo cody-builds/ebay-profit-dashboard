@@ -1,112 +1,218 @@
-// Core types for DealFlow
-
-export interface CardListing {
+// Transaction Models
+export interface Transaction {
   id: string;
-  name: string;
-  set: string;
-  condition: CardCondition;
-  price: number;
-  shipping: number;
-  seller: string;
-  platform: 'tcgplayer' | 'ebay';
-  url: string;
-  imageUrl?: string;
-  quantity?: number;
-  listedAt?: Date;
-}
-
-export type CardCondition = 
-  | 'Near Mint'
-  | 'Lightly Played'
-  | 'Moderately Played'
-  | 'Heavily Played'
-  | 'Damaged';
-
-export interface EbaySoldData {
-  avgPrice: number;
-  lowPrice: number;
-  highPrice: number;
-  recentSales: number;
-  lastSoldAt?: Date;
-  priceHistory: PricePoint[];
-}
-
-export interface PricePoint {
-  date: Date;
-  price: number;
-}
-
-export interface ArbitrageOpportunity {
-  id: string;
-  card: CardListing;
-  tcgPrice: number;
-  tcgShipping: number;
-  ebayAvgSold: number;
-  ebayLowSold: number;
-  ebayHighSold: number;
-  recentSalesCount: number;
+  ebayTransactionId: string;
+  ebayItemId: string;
   
-  // Calculated values
-  totalBuyCost: number;
-  estimatedSalePrice: number;
-  ebayFees: number;
-  paypalFees: number;
-  estimatedShipping: number;
+  // Sale Information
+  title: string;
+  soldPrice: number;
+  soldDate: Date;
+  listedDate: Date;
+  
+  // Cost Information
+  itemCost?: number;
+  costUpdatedAt?: Date;
+  costUpdatedBy?: string;
+  
+  // eBay Fees (auto-calculated)
+  ebayFees: EbayFeeBreakdown;
+  
+  // Shipping
+  shippingCost: number;
+  shippingService: string;
+  
+  // Calculated Fields
   netProfit: number;
-  roi: number;
   profitMargin: number;
+  daysListed: number;
   
-  // Risk assessment
-  riskLevel: 'low' | 'medium' | 'high';
-  confidence: number; // 0-100
+  // Metadata
+  category?: string;
+  condition?: string;
+  notes?: string;
+  tags?: string[];
+  
+  // Sync Information
+  syncedAt: Date;
+  syncStatus: 'synced' | 'pending' | 'error';
+  syncError?: string;
+}
+
+export interface EbayFeeBreakdown {
+  finalValueFee: number;
+  paymentProcessingFee: number;
+  insertionFee?: number;
+  total: number;
+}
+
+// User Settings Models
+export interface UserSettings {
+  id: string;
+  userId: string;
+  
+  // eBay Integration
+  ebayTokens?: {
+    accessToken: string;
+    refreshToken: string;
+    expiresAt: Date;
+  };
+  
+  // Sync Settings
+  syncFrequency: number;
+  autoSync: boolean;
+  syncHistoryDays: number;
+  
+  // Display Preferences
+  defaultView: 'dashboard' | 'transactions' | 'analytics';
+  currency: 'USD';
+  dateFormat: string;
+  
+  // Calculation Settings
+  defaultShippingCost: number;
+  roundingPrecision: number;
+  
+  // Notifications
+  emailNotifications: boolean;
+  syncFailureAlerts: boolean;
   
   createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface SearchFilters {
-  query: string;
+// Filter and Query Types
+export interface TransactionFilters {
+  dateRange?: {
+    start: Date;
+    end: Date;
+  };
   minProfit?: number;
-  minROI?: number;
-  maxBuyPrice?: number;
-  condition?: CardCondition[];
-  riskLevel?: ('low' | 'medium' | 'high')[];
-  sortBy: 'profit' | 'roi' | 'confidence' | 'recent';
-  sortOrder: 'asc' | 'desc';
+  maxProfit?: number;
+  category?: string;
+  condition?: string;
+  search?: string;
+  sortBy?: 'soldDate' | 'soldPrice' | 'netProfit' | 'profitMargin';
+  sortOrder?: 'asc' | 'desc';
 }
 
-export interface FeeStructure {
-  ebayFinalValuePercent: number;
-  ebayTransactionFee: number;
-  paypalPercent: number;
-  paypalFixed: number;
-  estimatedShipping: number;
+// Analytics Types
+export interface MonthlyAnalytics {
+  totalProfit: number;
+  averageProfit: number;
+  totalItems: number;
+  averageDaysListed: number;
+  profitMargin: number;
+  totalRevenue: number;
+  totalCosts: number;
 }
 
-// Default fee structure (eBay standard seller)
-export const DEFAULT_FEES: FeeStructure = {
-  ebayFinalValuePercent: 0.1325, // 13.25% for trading cards
-  ebayTransactionFee: 0.30,
-  paypalPercent: 0.0349, // 3.49%
-  paypalFixed: 0.49,
-  estimatedShipping: 1.50, // PWE with toploader
-};
-
-export interface PopularCard {
-  name: string;
-  set: string;
-  searchQuery: string;
-  category: 'vintage' | 'modern' | 'grail' | 'meta';
-  avgPrice: number;
+export interface TrendAnalysis {
+  profitChange: number;
+  volumeChange: number;
+  marginChange: number;
+  revenueChange: number;
 }
 
-// Popular cards to track
-export const POPULAR_CARDS: PopularCard[] = [
-  { name: 'Charizard ex', set: 'Obsidian Flames', searchQuery: 'charizard ex obsidian flames', category: 'modern', avgPrice: 35 },
-  { name: 'Pikachu VMAX', set: 'Vivid Voltage', searchQuery: 'pikachu vmax vivid voltage', category: 'modern', avgPrice: 45 },
-  { name: 'Umbreon VMAX Alt Art', set: 'Evolving Skies', searchQuery: 'umbreon vmax alt art evolving skies', category: 'grail', avgPrice: 350 },
-  { name: 'Mew ex', set: '151', searchQuery: 'mew ex 151 special art', category: 'modern', avgPrice: 55 },
-  { name: 'Miraidon ex', set: 'Scarlet & Violet', searchQuery: 'miraidon ex special art rare', category: 'modern', avgPrice: 40 },
-  { name: 'Charizard', set: 'Base Set', searchQuery: 'charizard base set unlimited', category: 'vintage', avgPrice: 150 },
-  { name: 'Mewtwo ex', set: '151', searchQuery: 'mewtwo ex 151 special art', category: 'modern', avgPrice: 30 },
-  { name: 'Lugia V Alt Art', set: 'Silver Tempest', searchQuery: 'lugia v alt art silver tempest', category: 'grail', avgPrice: 180 },
-];
+export interface CategoryAnalysis {
+  category: string;
+  totalProfit: number;
+  itemCount: number;
+  averageProfit: number;
+  averageMargin: number;
+}
+
+// API Response Types
+export interface APIResponse<T> {
+  success: true;
+  data: T;
+  metadata?: {
+    pagination?: PaginationInfo;
+    filters?: any;
+    timestamp: string;
+  };
+}
+
+export interface APIError {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+    details?: Record<string, any>;
+    field?: string;
+  };
+  timestamp: string;
+}
+
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+// Profit Calculation Types
+export interface ProfitCalculation {
+  soldPrice: number;
+  itemCost: number;
+  ebayFees: EbayFeeBreakdown;
+  shippingCost: number;
+  netProfit: number;
+  profitMargin: number;
+  breakdown: {
+    soldPrice: number;
+    itemCost: number;
+    ebayFees: EbayFeeBreakdown;
+    shippingCost: number;
+    netProfit: number;
+  };
+}
+
+// eBay API Types
+export interface EbayTransaction {
+  transactionId: string;
+  itemId: string;
+  title: string;
+  soldPrice: number;
+  soldDate: string;
+  listedDate: string;
+  shippingCost: number;
+  category: string;
+  condition: string;
+  fees: EbayFeeBreakdown;
+}
+
+// Sync Types
+export interface SyncResult {
+  success: boolean;
+  newTransactions: number;
+  updatedTransactions: number;
+  errors: string[];
+  syncTime: Date;
+}
+
+// Form Types
+export interface TransactionFormData {
+  title: string;
+  soldPrice: number;
+  itemCost: number;
+  shippingCost: number;
+  category?: string;
+  condition?: string;
+  notes?: string;
+  tags?: string[];
+}
+
+// Dashboard Types
+export interface DashboardMetrics {
+  totalProfit: number;
+  monthlyProfit: number;
+  totalTransactions: number;
+  averageProfit: number;
+  profitMargin: number;
+  topCategory: string;
+  trends: {
+    profit: number;
+    transactions: number;
+    margin: number;
+  };
+}
