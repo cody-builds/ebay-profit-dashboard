@@ -124,11 +124,11 @@ export function QuickActions() {
   const actionButtons = [
     {
       name: 'Sync eBay',
-      description: syncStatus?.status === 'syncing' ? 'Syncing...' : 'Sync transactions',
+      description: 'Sync transactions',
       onClick: handleManualSync,
       icon: RefreshCw,
-      disabled: isManualSyncing || syncStatus?.status === 'syncing',
-      loading: isManualSyncing || syncStatus?.status === 'syncing',
+      disabled: isManualSyncing,
+      loading: isManualSyncing,
     },
     {
       name: 'Export Data',
@@ -210,13 +210,6 @@ export function QuickActions() {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
         
         <div className="space-y-3 text-sm">
-          {syncStatus?.lastSyncTime && (
-            <div className="flex items-center space-x-2 text-gray-600">
-              <Upload className="h-4 w-4" />
-              <span>Last sync: {new Date(syncStatus.lastSyncTime).toLocaleString()}</span>
-            </div>
-          )}
-          
           <div className="flex items-center space-x-2 text-gray-600">
             <FileText className="h-4 w-4" />
             <span>Dashboard viewed: {new Date().toLocaleTimeString()}</span>
