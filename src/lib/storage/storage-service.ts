@@ -268,11 +268,11 @@ export class StorageService {
    */
   private deserializeTransaction(data: Record<string, unknown>): Transaction {
     return {
-      ...data,
-      soldDate: new Date(data.soldDate),
-      listedDate: new Date(data.listedDate),
-      syncedAt: new Date(data.syncedAt),
-      costUpdatedAt: data.costUpdatedAt ? new Date(data.costUpdatedAt) : undefined,
+      ...(data as Omit<Transaction, 'soldDate' | 'listedDate' | 'syncedAt' | 'costUpdatedAt'>),
+      soldDate: new Date(data.soldDate as string),
+      listedDate: new Date(data.listedDate as string),
+      syncedAt: new Date(data.syncedAt as string),
+      costUpdatedAt: data.costUpdatedAt ? new Date(data.costUpdatedAt as string) : undefined,
     };
   }
 

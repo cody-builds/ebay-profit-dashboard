@@ -92,10 +92,10 @@ export class EbaySyncService {
           // Process transactions from this page
           if (response.TransactionArray?.Transaction) {
             this.currentSyncProgress.status = 'processing';
-            
+
             for (const ebayTransaction of response.TransactionArray.Transaction) {
               try {
-                const transactionData = this.ebayClient.transformTransaction(ebayTransaction);
+                const transactionData = this.ebayClient.transformTransaction(ebayTransaction as unknown as Record<string, unknown>);
                 const existingTransaction = await this.storageService.getTransactionByEbayId(
                   transactionData.transactionId
                 );
@@ -143,7 +143,7 @@ export class EbaySyncService {
       }
 
       this.currentSyncProgress.status = 'completed';
-      
+
       // Update last sync time
       await this.storageService.updateLastSyncTime(new Date());
 
@@ -159,7 +159,7 @@ export class EbaySyncService {
         ...this.currentSyncProgress!,
         status: 'error',
       };
-      
+
       const errorMessage = `Sync failed: ${error}`;
       errors.push(errorMessage);
       console.error(errorMessage);
@@ -307,6 +307,10 @@ export class EbaySyncService {
    * Check if error should not be retried
    */
   private isNonRetryableError(error: Error | unknown): boolean {
+    if (!(error instanceof Error)) {
+      return false;
+    }
+    
     // Don't retry authentication errors
     if (error.message?.includes('401') || error.message?.includes('403')) {
       return true;
@@ -316,7 +320,7 @@ export class EbaySyncService {
     if (error.message?.includes('400')) {
       return true;
     }
-
+    
     return false;
   }
 }
