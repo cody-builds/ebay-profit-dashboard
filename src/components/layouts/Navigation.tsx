@@ -43,7 +43,10 @@ export function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, user, logout } = useAuthStore();
-  const { data: syncStatus, isLoading: isSyncLoading } = useSyncStatus();
+  // EMERGENCY: Disable sync status completely to stop phishing flags
+  // const { data: syncStatus, isLoading: isSyncLoading } = useSyncStatus();
+  const syncStatus = null;
+  const isSyncLoading = false;
 
   const handleLogout = async () => {
     await logout();

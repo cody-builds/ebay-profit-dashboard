@@ -4,7 +4,10 @@ import { RefreshCw, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
 
 export function SyncStatusWidget() {
-  const { data: syncStatus, isLoading } = useSyncStatus();
+  // EMERGENCY: Disable sync status to stop phishing flags
+  // const { data: syncStatus, isLoading } = useSyncStatus();
+  const syncStatus = null;
+  const isLoading = false;
 
   if (isLoading) {
     return (

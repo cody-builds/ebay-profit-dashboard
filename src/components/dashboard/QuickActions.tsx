@@ -17,7 +17,9 @@ import { useState } from 'react';
 
 export function QuickActions() {
   const addNotification = useAppStore((state) => state.addNotification);
-  const { data: syncStatus } = useSyncStatus();
+  // EMERGENCY: Disable sync status to stop phishing flags
+  // const { data: syncStatus } = useSyncStatus();
+  const syncStatus = null;
   const [isManualSyncing, setIsManualSyncing] = useState(false);
 
   const handleManualSync = async () => {
