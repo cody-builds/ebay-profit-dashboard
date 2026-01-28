@@ -45,7 +45,7 @@ export function Navigation() {
   const { isAuthenticated, user, logout } = useAuthStore();
   // EMERGENCY: Disable sync status completely to stop phishing flags
   // const { data: syncStatus, isLoading: isSyncLoading } = useSyncStatus();
-  const syncStatus = null;
+  const syncStatus = undefined;
   const isSyncLoading = false;
 
   const handleLogout = async () => {
