@@ -45,21 +45,6 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
 
         try {
-          // TEMPORARY BYPASS: Skip authentication for now
-          console.log('🚨 TEMPORARILY BYPASSING AUTHENTICATION');
-          set({
-            isAuthenticated: true,
-            user: {
-              id: 'demo-user-123',
-              email: 'demo@example.com',
-              name: 'Demo User',
-            },
-            supabaseUser: null,
-            profile: null,
-            isLoading: false,
-          });
-          return;
-
           // Check if Supabase is configured
           if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
             console.log('Supabase not configured, skipping authentication');
@@ -83,12 +68,12 @@ export const useAuthStore = create<AuthState>()(
             const { data: profile } = await supabase
               .from('profiles')
               .select('*')
-              .eq('id', session.user.id)
+              .eq('id', session.user!.id)
               .single();
 
             const userProfile: UserProfile = {
-              id: session.user.id,
-              email: session.user.email!,
+              id: session.user!.id,
+              email: session.user!.email!,
               name: profile?.full_name || undefined,
               fullName: profile?.full_name || undefined,
               avatarUrl: profile?.avatar_url || undefined,
@@ -98,7 +83,7 @@ export const useAuthStore = create<AuthState>()(
             set({
               isAuthenticated: true,
               user: userProfile,
-              supabaseUser: session.user,
+              supabaseUser: session.user!,
               profile: profile || null,
               isLoading: false,
             });
@@ -119,12 +104,12 @@ export const useAuthStore = create<AuthState>()(
               const { data: profile } = await supabase
                 .from('profiles')
                 .select('*')
-                .eq('id', session.user.id)
+                .eq('id', session.user!.id)
                 .single();
 
               const userProfile: UserProfile = {
-                id: session.user.id,
-                email: session.user.email!,
+                id: session.user!.id,
+                email: session.user!.email!,
                 name: profile?.full_name || undefined,
                 fullName: profile?.full_name || undefined,
                 avatarUrl: profile?.avatar_url || undefined,
@@ -134,7 +119,7 @@ export const useAuthStore = create<AuthState>()(
               set({
                 isAuthenticated: true,
                 user: userProfile,
-                supabaseUser: session.user,
+                supabaseUser: session.user!,
                 profile: profile || null,
                 isLoading: false,
               });
