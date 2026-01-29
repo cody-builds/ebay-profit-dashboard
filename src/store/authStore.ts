@@ -98,7 +98,7 @@ export const useAuthStore = create<AuthState>()(
           }
 
           // Listen to auth changes
-          supabase.auth.onAuthStateChange(async (event, session) => {
+          supabase.auth.onAuthStateChange(async (event: string, session: any) => {
             if (event === 'SIGNED_IN' && session?.user) {
               // Fetch user profile
               const { data: profile } = await supabase

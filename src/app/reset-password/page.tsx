@@ -16,7 +16,7 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     // Check if we have a valid session from the email link
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    supabase.auth.onAuthStateChange(async (event: string, session: any) => {
       if (event === 'PASSWORD_RECOVERY') {
         // User is in password recovery mode
         setMessage('Please enter your new password.');

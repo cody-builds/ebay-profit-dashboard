@@ -455,14 +455,14 @@ export class SupabaseStorageService {
       };
     }
 
-    const totalRevenue = data.reduce((sum, t) => sum + t.sold_price, 0);
-    const totalProfit = data.reduce((sum, t) => sum + t.net_profit, 0);
-    const totalListingDays = data.reduce((sum, t) => sum + t.days_listed, 0);
-    const totalMargin = data.reduce((sum, t) => sum + t.profit_margin, 0);
+    const totalRevenue = data.reduce((sum: number, t: any) => sum + t.sold_price, 0);
+    const totalProfit = data.reduce((sum: number, t: any) => sum + t.net_profit, 0);
+    const totalListingDays = data.reduce((sum: number, t: any) => sum + t.days_listed, 0);
+    const totalMargin = data.reduce((sum: number, t: any) => sum + t.profit_margin, 0);
 
     // Calculate top categories
     const categoryMap = new Map<string, { count: number; profit: number }>();
-    data.forEach(t => {
+    data.forEach((t: any) => {
       const category = t.category || 'Other';
       const existing = categoryMap.get(category) || { count: 0, profit: 0 };
       categoryMap.set(category, {
