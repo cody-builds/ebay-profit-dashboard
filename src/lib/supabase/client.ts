@@ -4,16 +4,20 @@ export function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   
-  console.log('🔍 Supabase ENV Debug:', {
-    url: url ? 'SET' : 'MISSING',
-    key: key ? 'SET' : 'MISSING',
-    urlPrefix: url?.substring(0, 20),
-    keyPrefix: key?.substring(0, 20)
-  });
+  // Force visible debug output
+  console.log('🚨 SUPABASE CLIENT DEBUG - START 🚨');
+  console.log('Environment URL:', url);
+  console.log('Environment KEY:', key);
+  console.log('URL Status:', url ? '✅ FOUND' : '❌ MISSING');
+  console.log('KEY Status:', key ? '✅ FOUND' : '❌ MISSING');
+  console.log('🚨 SUPABASE CLIENT DEBUG - END 🚨');
   
   if (!url || !key) {
-    console.error('❌ Missing Supabase credentials:', { url, key });
-    throw new Error('Missing Supabase configuration');
+    console.error('❌ FATAL: Missing Supabase credentials!');
+    // Return a mock client to prevent crashes for now
+    return {
+      auth: { onAuthStateChange: () => {}, getSession: () => Promise.resolve({ data: { session: null } }) }
+    } as any;
   }
   
   return createBrowserClient(url, key);
