@@ -5,6 +5,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { Navigation } from "@/components/layouts/Navigation";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { EnvDebug } from "@/components/debug/EnvDebug";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -35,6 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <EnvDebug />
         <ErrorBoundary>
           <QueryProvider>
             <AuthProvider>
